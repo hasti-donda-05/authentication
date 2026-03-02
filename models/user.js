@@ -26,6 +26,19 @@ const userSchema = mongoose.Schema({
 
         type: String,
     },
+    isVarify: {
+        type: Boolean,
+        default: false
+    },
+
+    OTP: {
+        type: Number,
+        required: true
+    },
+
+    
+    
+
 
 
 })

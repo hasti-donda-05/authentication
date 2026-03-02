@@ -21,6 +21,7 @@ const app = express();
 
 const Register = async (req, res) => {
     try {
+        req.body.OTP = Math.floor(Math.floor(Math.random() * (999999 - 100000)) + 100000)
         if (req.body.user_name != '' && req.body.email != '' && req.body.mobile != '' && req.body.password != '' && req.body.confirm_password != '' && req.body.name != '' && req.body.otp != '') {
             // console.log('hello');
             // res.status(500).json({
@@ -35,21 +36,37 @@ const Register = async (req, res) => {
                 })
             }
             else {
-                // let geterateOTP = Math.floor(Math.random())
-                if (req.body.mobile.length < 10 || req.body.otp.length < 7) {
+                if (req.body.mobile.length < 10) {
                     res.status(400).json({
                         status: false,
-                        message: "Enter valid number"
+                        message: "Enter valid mobile number"
                     })
                 }
                 else {
-                    const user = await User.create(req.body);
-                    res.status(200).json({
-                        status: true,
-                        data: user,
-                        message: "successfully user register"
-                    })
+                    if (!req.body.OTP) {
+                        res.status(400).json({
+                            status: false,
+                            message: "Please Enter OTP"
+                        })
+                    }
+                    else {
+                        if (req.body.isVarify == true) {
+                            await User.create(req.body);
+                            res.status(201).json({
+                                success: true,
+                                message: "User Registered successfully"
+                            })
+                        }
+                        else {
+                            res.status(400).json({
+                                success: false,
+                                message: "Please varify first"
+
+                            })
+                        }
+                    }
                 }
+
 
             }
         }
@@ -71,7 +88,37 @@ const Register = async (req, res) => {
         })
     }
 }
+const varifyOTP = async (req, res) => {
+    try {
+        if (!req.body.email || !req.body.OTP) {
+            res.status(200).json({
+                success: false,
+                messge: "Please enter Your Email and OTP"
+            })
+        }
+        else {
+            // await console.log('asdcb');
+            const user = await User.findOne({ email: req.body.email });
+            if (req.body.OTP === user.OTP) {
 
+                console.log(user);
+                res.status(200).json({
+                    success: true,
+                    data: user,
+                    messge: "jhdgshfghdshd"
+                })
+            }
+            else {
+                res.status(400).json({
+                    success: false,
+                    messge: "please enter correct OTP"
+                })
+            }
+        }
+    } catch (error) {
+        console.log(error.message);
+    }
+}
 const login = async (req, res) => {
     try {
         if (!req.body.email || !req.body.password) {
@@ -83,21 +130,21 @@ const login = async (req, res) => {
         }
         else {
             // const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
-            const user = await User.find({ $and:[{email: req.body.email}, {password: req.body.password}] });
+            const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
 
             console.log(user);
-            if (!user) {
-
-                res.status(404).json({
-                    success: false,
-                    message: "User not Found please enter valid email and password"
-                })
-            }
-            else {
+            if (user.length !== 0) {
                 res.status(200).json({
                     success: true,
                     data: user,
                     message: "User Found"
+                })
+
+            }
+            else {
+                res.status(404).json({
+                    success: false,
+                    message: "User not Found please enter valid email and password"
                 })
             }
         }
@@ -130,5 +177,5 @@ const getdata = async (req, res) => {
 }
 
 export {
-    Register, login, getdata
+    Register, login, getdata, varifyOTP
 };
