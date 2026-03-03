@@ -21,7 +21,9 @@ const app = express();
 
 const Register = async (req, res) => {
     try {
-        req.body.OTP = Math.floor(Math.floor(Math.random() * (999999 - 100000)) + 100000)
+        req.body.OTP = Math.floor(Math.floor(Math.random() * (999999 - 100000)) + 100000);
+        // req.body.passwordToken = Date.now()
+
         if (req.body.user_name != '' && req.body.email != '' && req.body.mobile != '' && req.body.password != '' && req.body.confirm_password != '' && req.body.name != '' && req.body.otp != '') {
             // console.log('hello');
             // res.status(500).json({
@@ -105,7 +107,7 @@ const varifyOTP = async (req, res) => {
                 res.status(200).json({
                     success: true,
                     data: user,
-                    messge: "jhdgshfghdshd"
+                    messge: "OTP varified"
                 })
             }
             else {
@@ -168,6 +170,39 @@ const login = async (req, res) => {
     }
 }
 
+const forgot_password = async (req, res) => {
+    try {
+        if (!req.body.email) {
+            await res.status(500).json({
+                status: false,
+                message: "please enter your email address"
+            })
+        }
+        else {
+            const user = await User.findOne({ email: req.body.email });
+            if (user) {
+                user.passwordToken = await Date.now();
+                await user.save()
+                await user.save();
+                res.status(200).json({
+                    status: true,
+                    data: user,
+                    message: "User fount and reset token generated"
+                })
+            }
+        }
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: false,
+            message: "error"
+        })
+    }
+}
+
+
+
 
 const getdata = async (req, res) => {
     const user = await User.find();
@@ -177,5 +212,5 @@ const getdata = async (req, res) => {
 }
 
 export {
-    Register, login, getdata, varifyOTP
+    Register, login, getdata, varifyOTP, forgot_password
 };

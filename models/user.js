@@ -35,9 +35,13 @@ const userSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    passwordToken: {
+        type: Number,
+        required: true
+    }
 
-    
-    
+
+
 
 
 
