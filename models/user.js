@@ -37,8 +37,9 @@ const userSchema = mongoose.Schema({
     },
     passwordToken: {
         type: Number,
-        required: true
-    }
+        // required: true
+    },
+  
 
 
 

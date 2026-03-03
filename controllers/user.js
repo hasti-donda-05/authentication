@@ -21,10 +21,10 @@ const app = express();
 
 const Register = async (req, res) => {
     try {
-        req.body.OTP = Math.floor(Math.floor(Math.random() * (999999 - 100000)) + 100000);
         // req.body.passwordToken = Date.now()
+        req.body.OTP = Math.floor(Math.floor(Math.random() * (999999 - 100000)) + 100000);
 
-        if (req.body.user_name != '' && req.body.email != '' && req.body.mobile != '' && req.body.password != '' && req.body.confirm_password != '' && req.body.name != '' && req.body.otp != '') {
+        if (req.body.user_name != '' && req.body.email != '' && req.body.mobile != '' && req.body.password != '' && req.body.confirm_password != '' && req.body.name != '') {
             // console.log('hello');
             // res.status(500).json({
             // success: true,
@@ -82,13 +82,13 @@ const Register = async (req, res) => {
 
 
 
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            status: false,
-            message: "user already exists..."
-        })
-    }
+    }catch (error) {
+    console.log(error.errors);
+    res.status(500).json({
+        status: false,
+        message: error.message
+    });
+}
 }
 const varifyOTP = async (req, res) => {
     try {
@@ -201,7 +201,50 @@ const forgot_password = async (req, res) => {
     }
 }
 
+// const reset_password = async (req, res) => {
+//     try {
+//         if(!req.body.email)
 
+//     } catch (error) {
+//         res.status(500).json({
+//             success: false,
+//             message: "Something wrong"
+//         })
+//     }
+// }
+
+const change_password = async (req, res) => {
+    try {
+        if (!req.body.email || !req.body.password) {
+            res.status(400).json({
+                success: false,
+                message: "please enter email and password"
+            })
+        }
+        else {
+
+            const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
+            console.log(user);
+
+            if (user) {
+                const cp = await User.findOneAndUpdate({ password: req.body.password }, { $set: { password: req.body.new_password } },{new:true});
+                // req.body.password = req.body.new_password
+                console.log(cp)
+                res.status(400).json({
+                    success: true,
+                    data: user,
+                    message: "please enter email and password"
+                })
+            }
+        }
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
 
 
 const getdata = async (req, res) => {
@@ -212,5 +255,5 @@ const getdata = async (req, res) => {
 }
 
 export {
-    Register, login, getdata, varifyOTP, forgot_password
+    Register, login, getdata, varifyOTP, forgot_password, change_password,
 };

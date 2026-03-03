@@ -1,5 +1,5 @@
 import express from "express";
-import { Register, login, getdata, varifyOTP, forgot_password } from '../controllers/user.js';
+import { Register, login, getdata, varifyOTP, forgot_password, change_password} from '../controllers/user.js';
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ router.get('/login', login)
 router.get('/get', getdata)
 router.get('/varifyOTP', varifyOTP)
 router.post('/forgot_password', forgot_password);
+router.post('/change_password', change_password);
 
 
 export default router;
