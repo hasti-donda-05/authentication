@@ -1,9 +1,7 @@
 import { User } from "../models/user.js";
-import express from 'express';
-const app = express();
 // const Register = async (req, res) => {
 //     try {
-//         const user = await User.find()
+//         const user = await User.findOne()
 //         res.status(200).json({
 //             status: true,
 //             data: user,
@@ -22,10 +20,10 @@ const app = express();
 const Register = async (req, res) => {
     try {
         // req.body.passwordToken = Date.now()
-        req.body.OTP = Math.floor(Math.random() * 999999 - 100000) + 100000;
-        req.body.otpExpiresAt = Date.now() + 1 * 60 * 1000;
+        req.body.OTP = Math.floor(Math.random() * 900000) + 100000
+        req.body.otpExpiresAt = Date.now() + 2 * 60 * 1000;
 
-        if (!req.body.user_name || !req.body.email || !req.body.mobile || !req.body.password || !req.body.confirm_password || !req.body.name || !req.body.OTP) {
+        if (!req.body.user_name || !req.body.email || !req.body.mobile || !req.body.password || !req.body.confirm_password || !req.body.name) {
 
             return res.status(400).json({
                 success: false,
@@ -44,12 +42,17 @@ const Register = async (req, res) => {
             }
             else {
 
-
+                const isExist = await User.findOne({ email: req.body.email });
+                if (isExist) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "User Already Exist"
+                    })
+                }
                 const user = await User.create(req.body);
                 // await user.save();   
                 return res.status(201).json({
                     success: true,
-
                     message: "User Registered successfully"
                 });
 
@@ -68,20 +71,20 @@ const Register = async (req, res) => {
         });
     }
 }
-const varifyOTP = async (req, res) => {
+const verifyOTP = async (req, res) => {
     try {
         if (!req.body.email || !req.body.OTP) {
-            return res.status(200).json({
+            return res.status(400).json({
                 success: false,
-                messge: "Please enter Your Email and OTP"
+                message: "Please enter Your Email and OTP"
             })
         }
         else {
             const user = await User.findOne({ email: req.body.email });
             console.log(user);
 
-            console.log("Now:", Date.now());
-            console.log("Expires:", user.tokenExpiresAt);
+            // console.log("Now:", Date.now());
+            // console.log("Expires:", user.tokenExpiresAt);
             if (!user) {
                 return res.status(404).json({
                     success: false,
@@ -90,16 +93,7 @@ const varifyOTP = async (req, res) => {
                 });
             }
 
-            if (req.body.OTP != user.OTP) {
-                {
 
-                    return res.status(200).json({
-                        success: true,
-
-                        message: "Invalid OTP"
-                    });
-                }
-            }
 
             if (Date.now() > new Date(user.otpExpiresAt).getTime()) {
                 user.OTP = null;
@@ -112,9 +106,20 @@ const varifyOTP = async (req, res) => {
                     message: "OTP Expired"
                 });
             }
+            if (req.body.OTP != user.OTP) {
+                {
 
+                    return res.status(400).json({
+                        success: false,
+                        message: "Invalid OTP"
+                    });
+                }
+            }
 
-            user.isVarify = true;
+                // user.OTP = null;
+                // user.otpExpiresAt = null;
+
+            user.isverify = true;
             await user.save();
 
             return res.status(200).json({
@@ -126,7 +131,10 @@ const varifyOTP = async (req, res) => {
 
         }
     } catch (error) {
-        console.log(error.message);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        })
     }
 }
 const login = async (req, res) => {
@@ -135,20 +143,26 @@ const login = async (req, res) => {
 
             res.status(400).json({
                 success: false,
-                message: "User not found please enter both mobile password and email"
+                message: "please enter email and password"
             })
         }
         else {
-            // const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
-            const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
+            // const user = await User.findOne({ $and: [{ email: req.body.email }, { password: req.body.password }] });
+            const user = await User.findOne({ email: req.body.email, password: req.body.password });
 
             console.log(user);
-            if (user.length !== 0) {
-                if (isVarify == true) {
-                    res.status(200).json({
+            if (user) {
+                if (user.isverify == true) {
+                    return res.status(200).json({
                         success: true,
                         data: user,
                         message: "User Found"
+                    })
+                }
+                else {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Unverified User"
                     })
                 }
 
@@ -183,9 +197,9 @@ const login = async (req, res) => {
 const forgot_password = async (req, res) => {
     try {
         if (!req.body.email) {
-            await res.status(500).json({
+            return res.status(400).json({
                 status: false,
-                message: "please enter your email address"
+                message: "please enter email"
             })
         }
         else {
@@ -193,23 +207,22 @@ const forgot_password = async (req, res) => {
 
             const user = await User.findOne({ email: req.body.email });
 
-            await user.save()
             if (!user) {
 
 
-                res.status(200).json({
-                    status: true,
+                return res.status(404).json({
+                    status: false,
                     data: user,
                     message: "User not  found"
                 })
             }
-            user.passwordToken = Math.floor(100000 + Math.random() * 900000);
-            user.tokenExpiresAt = Date.now() + 1 * 60 * 1000;
+            user.passwordToken = Math.floor(Math.random() * 900000) + 100000
+            user.tokenExpiresAt = Date.now() + 2 * 60 * 1000;
 
             await user.save();
 
 
-            res.status(200).json({
+            return res.status(200).json({
                 status: true,
                 message: "Reset OTP generated successfully"
             });
@@ -220,7 +233,7 @@ const forgot_password = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             status: false,
             message: "error"
         })
@@ -230,28 +243,41 @@ const forgot_password = async (req, res) => {
 const reset_password = async (req, res) => {
     console.log("hello")
     try {
-        if (!req.body.email || !req.body.confirm_password || !req.body.new_password) {
-            res.status(404).json({
+        if (!req.body.email || !req.body.confirm_password || !req.body.new_password || !req.body.passwordToken) {
+            res.status(400).json({
                 success: false,
                 message: "PLease Fill All Details"
             })
         }
         else {
-            const user = User.findOne({ email: req.body.email });
+            const user = await User.findOne({ email: req.body.email });
+
             if (user) {
+                if (req.body.passwordToken != user.passwordToken) {
+                    return res.status(400).json({ success: false, message: "Invalid token" });
+                }
+                if (Date.now() > new Date(user.tokenExpiresAt).getTime()) {
+                    return res.status(400).json({ success: false, message: "Token expired" });
+                }
                 if (req.body.new_password === req.body.confirm_password) {
                     const cp = await User.findOneAndUpdate({ email: req.body.email }, { $set: { password: req.body.new_password } });
                     console.log(cp);
 
-                    res.status(200).json({
+                    return res.status(200).json({
                         success: true,
                         message: "Done"
+                    })
+                }
+                else {
+                    return res.status(400).json({
+                        success: false,
+                        message: "enter correct password"
                     })
                 }
             }
             else {
                 res.status(404).json({
-                    success: true,
+                    success: false,
                     message: "User not found"
                 })
             }
@@ -267,7 +293,7 @@ const reset_password = async (req, res) => {
 
 const change_password = async (req, res) => {
     try {
-        if (!req.body.email || !req.body.password) {
+        if (!req.body.email || !req.body.password || !req.body.new_password) {
             res.status(400).json({
                 success: false,
                 message: "please enter email and password"
@@ -275,17 +301,25 @@ const change_password = async (req, res) => {
         }
         else {
 
-            const user = await User.find({ $and: [{ email: req.body.email }, { password: req.body.password }] });
+            const user = await User.findOne({ $and: [{ email: req.body.email }, { password: req.body.password }] });
             console.log(user);
 
             if (user) {
-                const cp = await User.findOneAndUpdate({ password: req.body.password }, { $set: { password: req.body.new_password } }, { new: true });
-                // req.body.password = req.body.new_password
+                const cp = await User.findOneAndUpdate({ email: req.body.email, password: req.body.password }, { $set: { password: req.body.new_password } }, { new: true });
                 console.log(cp)
-                res.status(400).json({
+                res.status(200).json({
                     success: true,
                     data: user,
-                    message: "please enter email and password"
+
+                    message: "Password changed successfully"
+
+                })
+            }
+            else {
+                res.status(404).json({
+                    success: false,
+                    message: "User Not Found"
+
                 })
             }
         }
@@ -300,12 +334,19 @@ const change_password = async (req, res) => {
 
 
 const getdata = async (req, res) => {
-    const user = await User.find();
-    res.status(200).json({
-        data: user,
-    })
+    try {
+        const user = await User.find();
+        return res.status(200).json({
+            data: user,
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
 }
 
 export {
-    Register, login, getdata, varifyOTP, forgot_password, change_password, reset_password
+    Register, login, getdata, verifyOTP, forgot_password, change_password, reset_password
 };

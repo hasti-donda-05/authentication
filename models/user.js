@@ -26,7 +26,7 @@ const userSchema = mongoose.Schema({
 
         type: String,
     },
-    isVarify: {
+    isverify: {
         type: Boolean,
         default: false
     },
