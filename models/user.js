@@ -32,14 +32,20 @@ const userSchema = mongoose.Schema({
     },
 
     OTP: {
-        type: Number,
-        required: true
+        type: String,
+    },
+    otpExpiresAt: {
+        type: Date,
     },
     passwordToken: {
         type: Number,
         // required: true
     },
-  
+    tokenExpiresAt: {
+        type: Date
+
+    }
+
 
 
 
